@@ -1,0 +1,86 @@
+name: Generate Instagram Content
+
+on:
+  # 手動実行
+  workflow_dispatch:
+    inputs:
+      content_type:
+        description: 'コンテンツタイプ'
+        required: true
+        default: 'text'
+        type: choice
+        options:
+          - text
+          - youtube
+          - blog
+      content_source:
+        description: 'コンテンツ（テキスト、YouTube URL、またはブログURL）'
+        required: true
+        type: string
+      content_name:
+        description: 'コンテンツ名（ファイル名用）'
+        required: false
+        type: string
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pillow youtube-transcript-api beautifulsoup4 requests openai
+      
+      - name: Download IPAex Mincho font
+        run: |
+          mkdir -p fonts
+          curl -L -o ipaexm.zip "https://moji.or.jp/wp-content/ipafont/IPAexfont/ipaexm00401.zip"
+          unzip -o ipaexm.zip
+          cp ipaexm00401/ipaexm.ttf fonts/
+          rm -rf ipaexm.zip ipaexm00401
+      
+      - name: Generate content
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          CONTENT_NAME="${{ github.event.inputs.content_name }}"
+          if [ -z "$CONTENT_NAME" ]; then
+            CONTENT_NAME=$(date +%Y%m%d_%H%M%S)
+          fi
+          
+          case "${{ github.event.inputs.content_type }}" in
+            youtube)
+              python insta_generator.py --youtube "${{ github.event.inputs.content_source }}" --name "$CONTENT_NAME"
+              ;;
+            blog)
+              python insta_generator.py --blog "${{ github.event.inputs.content_source }}" --name "$CONTENT_NAME"
+              ;;
+            text)
+              python insta_generator.py --text "${{ github.event.inputs.content_source }}" --name "$CONTENT_NAME"
+              ;;
+          esac
+      
+      - name: Upload generated images
+        uses: actions/upload-artifact@v4
+        with:
+          name: instagram-content-${{ github.event.inputs.content_name || github.run_id }}
+          path: output/
+          retention-days: 30
+      
+      - name: Create summary
+        run: |
+          echo "## 📸 Instagram Content Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Type:** ${{ github.event.inputs.content_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Source:** ${{ github.event.inputs.content_source }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Generated Files:" >> $GITHUB_STEP_SUMMARY
+          ls -la output/*/ >> $GITHUB_STEP_SUMMARY
