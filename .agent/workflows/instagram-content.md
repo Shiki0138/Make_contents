@@ -183,8 +183,23 @@ python impact_generator.py
 
 ## 画像生成後の手順
 
+### 自動投稿（推奨）
+
 // turbo
-画像生成完了後、Meta Business Suite を開く：
+```bash
+venv/bin/python3 instagram_poster.py output/[folder_name]
+```
+
+ドライランで事前確認：
+// turbo
+```bash
+venv/bin/python3 instagram_poster.py output/[folder_name] --dry-run
+```
+
+### 手動投稿（フォールバック）
+
+// turbo
+Meta Business Suite を開く：
 ```bash
 open "https://business.facebook.com/latest/composer?asset_id=108560474299764&business_id=893445144509366&nav_ref=internal_nav&ref=biz_web_content_manager_calendar_view&context_ref=CONTENT_CALENDAR"
 ```

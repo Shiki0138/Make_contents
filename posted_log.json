@@ -1,0 +1,27 @@
+{
+    "posted": [
+        {
+            "folder": "e2_yes_set",
+            "posted_at": "2026-02-28T18:04:41+09:00",
+            "media_id": "18102165494508559"
+        }
+    ],
+    "generated": [
+        "e2_yes_set",
+        "e3_question_order",
+        "e4_visual_anchor",
+        "e5_silence",
+        "f1_word_of_mouth",
+        "f2_photo_moment",
+        "f3_referral",
+        "f4_google_review",
+        "g1_first_impression",
+        "g2_name_recall",
+        "g3_coupon_trap",
+        "g4_follow_up_dm",
+        "g5_homework",
+        "h1_training_science",
+        "h2_feedback_timing",
+        "hp_cost"
+    ]
+}
