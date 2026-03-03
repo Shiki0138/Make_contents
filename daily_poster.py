@@ -369,6 +369,9 @@ def post_folder(folder: str, dry_run: bool = False) -> str | None:
 
 def post_folder_facebook(folder: str, dry_run: bool = False) -> str | None:
     """Post a folder's content to Facebook Page."""
+    if os.environ.get("FACEBOOK_POSTING_ENABLED", "").lower() != "true":
+        return None
+
     if not os.environ.get("FACEBOOK_PAGE_ID"):
         print("\n⏭️  Facebook posting skipped (no FACEBOOK_PAGE_ID)")
         return None

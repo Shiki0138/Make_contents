@@ -1,27 +1,42 @@
 {
-    "posted": [
-        {
-            "folder": "e2_yes_set",
-            "posted_at": "2026-02-28T18:04:41+09:00",
-            "media_id": "18102165494508559"
-        }
-    ],
-    "generated": [
-        "e2_yes_set",
-        "e3_question_order",
-        "e4_visual_anchor",
-        "e5_silence",
-        "f1_word_of_mouth",
-        "f2_photo_moment",
-        "f3_referral",
-        "f4_google_review",
-        "g1_first_impression",
-        "g2_name_recall",
-        "g3_coupon_trap",
-        "g4_follow_up_dm",
-        "g5_homework",
-        "h1_training_science",
-        "h2_feedback_timing",
-        "hp_cost"
-    ]
+  "posted": [
+    {
+      "folder": "e2_yes_set",
+      "posted_at": "2026-02-28T18:04:41+09:00",
+      "media_id": "18102165494508559"
+    },
+    {
+      "folder": "e3_question_order",
+      "posted_at": "2026-03-01T19:01:51.170260+09:00",
+      "media_id": "18041003987756128"
+    },
+    {
+      "folder": "e4_visual_anchor",
+      "posted_at": "2026-03-03T20:47:09.098448+09:00",
+      "media_id": "dry-run"
+    },
+    {
+      "folder": "e4_visual_anchor",
+      "posted_at": "2026-03-03T20:48:56.219691+09:00",
+      "media_id": "17966304186012656"
+    }
+  ],
+  "generated": [
+    "e2_yes_set",
+    "e3_question_order",
+    "e4_visual_anchor",
+    "e5_silence",
+    "f1_word_of_mouth",
+    "f2_photo_moment",
+    "f3_referral",
+    "f4_google_review",
+    "g1_first_impression",
+    "g2_name_recall",
+    "g3_coupon_trap",
+    "g4_follow_up_dm",
+    "g5_homework",
+    "h1_training_science",
+    "h2_feedback_timing",
+    "hp_cost"
+  ]
 }

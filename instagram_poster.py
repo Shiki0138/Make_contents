@@ -106,19 +106,38 @@ class InstagramPoster:
         self.user_id = user_id
         self.access_token = access_token
 
+    MAX_RETRIES = 3
+    RETRY_BASE_DELAY = 5  # seconds
+
     def _post(self, endpoint: str, params: dict) -> dict:
-        """Make a POST request to Graph API."""
+        """Make a POST request to Graph API with retry on server errors."""
         params["access_token"] = self.access_token
         url = f"{GRAPH_API_BASE}/{endpoint}"
-        resp = requests.post(url, data=params, timeout=30)
 
-        if resp.status_code != 200:
+        last_error = None
+        for attempt in range(1, self.MAX_RETRIES + 1):
+            resp = requests.post(url, data=params, timeout=60)
+
+            if resp.status_code == 200:
+                return resp.json()
+
             error_detail = resp.json().get("error", {}).get("message", resp.text)
-            raise RuntimeError(
-                f"Graph API error ({resp.status_code}): {error_detail}"
-            )
+            last_error = f"Graph API error ({resp.status_code}): {error_detail}"
 
-        return resp.json()
+            # Retry only on 500-series (server) errors
+            if resp.status_code >= 500 and attempt < self.MAX_RETRIES:
+                delay = self.RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                print(
+                    f"  ⚠️  Server error (attempt {attempt}/{self.MAX_RETRIES}), "
+                    f"retrying in {delay}s..."
+                )
+                time.sleep(delay)
+                continue
+
+            # Client errors (4xx) or final attempt — fail immediately
+            raise RuntimeError(last_error)
+
+        raise RuntimeError(last_error)
 
     def _get(self, endpoint: str, params: dict | None = None) -> dict:
         """Make a GET request to Graph API."""
