@@ -257,14 +257,15 @@ def create_content_slide(lines, output_path):
         else:
             x = MARGIN + 10
         
-        # Highlight background
+        # Highlight underline bar (bottom 30% of text height)
         if ld.get("highlight"):
-            padding = 12
+            bar_h = max(int(ld["height"] * 0.3), 10)
+            padding_x = 8
             draw.rectangle([
-                x - padding, 
-                current_y - padding,
-                x + ld["width"] + padding,
-                current_y + ld["height"] + padding
+                x - padding_x,
+                current_y + ld["height"] - bar_h + 4,
+                x + ld["width"] + padding_x,
+                current_y + ld["height"] + 4
             ], fill=hex_to_rgb(COLORS["accent"]))
         
         draw.text((x, current_y), ld["text"], font=ld["font"], 

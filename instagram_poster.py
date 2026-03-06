@@ -40,40 +40,75 @@ PUBLISH_POLL_MAX_ATTEMPTS = 20
 
 
 # ---------------------------------------------------------------------------
-# Image Uploader (imgbb)
+# Image Uploader (catbox.moe primary, imgbb fallback)
 # ---------------------------------------------------------------------------
+
+CATBOX_UPLOAD_URL = "https://catbox.moe/user/api.php"
+IMGBB_UPLOAD_URL = "https://api.imgbb.com/1/upload"
 
 
 class ImageUploader:
-    """Upload local images to imgbb and return public URLs."""
+    """Upload local images to a public host and return URLs.
 
-    def __init__(self, api_key: str):
-        if not api_key:
-            raise ValueError("IMGBB_API_KEY is required")
-        self.api_key = api_key
+    Primary:  catbox.moe  (no API key, reliable with Meta Graph API)
+    Fallback: imgbb       (requires IMGBB_API_KEY)
+    """
 
-    def upload_image(self, image_path: str) -> str:
-        """Upload a single image to imgbb and return the public URL."""
-        if not os.path.exists(image_path):
-            raise FileNotFoundError(f"Image not found: {image_path}")
+    def __init__(self, api_key: str | None = None):
+        self.imgbb_api_key = api_key
+
+    # -- catbox.moe (primary) -----------------------------------------------
+
+    def _upload_catbox(self, image_path: str) -> str:
+        """Upload via catbox.moe — no API key required."""
+        with open(image_path, "rb") as f:
+            resp = requests.post(
+                CATBOX_UPLOAD_URL,
+                data={"reqtype": "fileupload"},
+                files={"fileToUpload": (os.path.basename(image_path), f, "image/png")},
+                timeout=60,
+            )
+        resp.raise_for_status()
+        url = resp.text.strip()
+        if not url.startswith("https://"):
+            raise RuntimeError(f"catbox upload failed: {url}")
+        return url
+
+    # -- imgbb (fallback) ---------------------------------------------------
+
+    def _upload_imgbb(self, image_path: str) -> str:
+        """Upload via imgbb — requires API key."""
+        if not self.imgbb_api_key:
+            raise RuntimeError("IMGBB_API_KEY is required for fallback upload")
 
         with open(image_path, "rb") as f:
             image_data = base64.b64encode(f.read()).decode("utf-8")
 
         payload = {
-            "key": self.api_key,
+            "key": self.imgbb_api_key,
             "image": image_data,
             "name": os.path.splitext(os.path.basename(image_path))[0],
         }
-
         resp = requests.post(IMGBB_UPLOAD_URL, data=payload, timeout=30)
         resp.raise_for_status()
         result = resp.json()
-
         if not result.get("success"):
             raise RuntimeError(f"imgbb upload failed: {result}")
+        return result["data"]["url"]
 
-        url = result["data"]["url"]
+    # -- public API ---------------------------------------------------------
+
+    def upload_image(self, image_path: str) -> str:
+        """Upload a single image, trying catbox first then imgbb."""
+        if not os.path.exists(image_path):
+            raise FileNotFoundError(f"Image not found: {image_path}")
+
+        try:
+            url = self._upload_catbox(image_path)
+        except Exception as e:
+            print(f"  ⚠️  catbox.moe failed ({e}), trying imgbb...")
+            url = self._upload_imgbb(image_path)
+
         print(f"  ✅ Uploaded: {os.path.basename(image_path)} → {url}")
         return url
 
@@ -84,7 +119,6 @@ class ImageUploader:
             print(f"  📤 Uploading image {i}/{len(image_paths)}...")
             url = self.upload_image(path)
             urls.append(url)
-            # Be polite to the API
             if i < len(image_paths):
                 time.sleep(0.5)
         return urls
@@ -291,13 +325,11 @@ def post_from_output(
             print("⚠️  No caption.txt found — posting without caption")
 
     # ── Load credentials ───────────────────────────────────────
-    imgbb_key = os.environ.get("IMGBB_API_KEY")
+    imgbb_key = os.environ.get("IMGBB_API_KEY")  # optional fallback
     ig_user_id = os.environ.get("INSTAGRAM_USER_ID")
     ig_token = os.environ.get("INSTAGRAM_ACCESS_TOKEN")
 
     missing = []
-    if not imgbb_key:
-        missing.append("IMGBB_API_KEY")
     if not ig_user_id:
         missing.append("INSTAGRAM_USER_ID")
     if not ig_token:
@@ -308,8 +340,8 @@ def post_from_output(
         print("   Set them in .env or export them.")
         sys.exit(1)
 
-    # ── Upload images to imgbb ─────────────────────────────────
-    print("\n📤 Uploading images to imgbb...")
+    # ── Upload images ──────────────────────────────────────────
+    print("\n📤 Uploading images...")
     uploader = ImageUploader(api_key=imgbb_key)
     image_urls = uploader.upload_images(image_paths)
 
